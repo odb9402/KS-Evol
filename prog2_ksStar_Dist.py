@@ -1,10 +1,10 @@
 import json
 import os
 import collections
+import sys
 
-
-inputDir = 'E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.binDist.csv'
-outputDir = 'E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.KSHist.csv'
+inputDir = sys.argv[1]
+outputDir = sys.argv[2]
 
 def list_to_Dict(li):
 	dct = {}
@@ -13,7 +13,7 @@ def list_to_Dict(li):
 			dct[item] = dct[item] + 1
 		else:
 			dct[item] = 1
-	
+
 
 	return	collections.OrderedDict(sorted(dct.items()))
 
@@ -24,12 +24,12 @@ for line in input:
 	line = line.strip().split()
 
 	newLine = []
-	
+
 	for n in line:
 		newLine.append(float(n) )
-	
+
 	histogram = list_to_Dict(newLine)
 	output.write(json.dumps(histogram))
 	output.write('\n')
-	
+
 output.close()

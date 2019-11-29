@@ -1,6 +1,11 @@
-input='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.res.2.csv'
-pInput='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.pVal.csv'
-output='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.res.ks.csv'
+import sys
+#input='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.res.2.csv'
+#pInput='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.pVal.csv'
+#output='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.res.ks.csv'
+
+input= sys.argv[1]
+pInput= sys.argv[2]
+output= sys.argv[3]
 
 timePoint = 12
 
@@ -27,7 +32,10 @@ while (True):
 	line.append(tmp[8])
 	line.append(tmp[9])
 	line.append(tmp[11])
-	line.append(pVals[p].rstrip())
+	try:
+		line.append(pVals[p].rstrip())
+	except IndexError:
+		continue
 	line.append(tmp[10])
 
 	p = p + 1

@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
+import sys
 
-
-input = "E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.merge.2.csv"
-output = "E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.res.2.csv"
+#input = "E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.merge.2.csv"
+#output = "E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.res.2.csv"
+input = sys.argv[1] 
+output = sys.argv[2] 
 data = pd.read_csv( input,
 					sep='\t',
 					names=['CHROM', 'POS', 'TIMEPOINT', 'REF', 'ALT', 'R_CNT', 'A_CNT'])
