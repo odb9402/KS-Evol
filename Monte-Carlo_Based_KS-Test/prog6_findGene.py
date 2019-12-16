@@ -27,36 +27,36 @@ out = open(outPATH, 'w')
 geneLine = gff.readlines()
 
 for line in mine:
-	
-	tmp = line.strip().split('\t')
-	pos = int(tmp[1])
-	chrom = CHROM_LIST[tmp[0].strip()]
 
-	
-	find =0
-	for i in range(0, len(geneLine)):
-		gene = geneLine[i]
-		tmp =	gene.strip().split(' ')
-		
-		gChrom = tmp[0]
-		
-		if(gChrom == chrom ):
-			start = int(tmp[3])
-			end = int(tmp[4])
+    tmp = line.strip().split('\t')
+    pos = int(tmp[1])
+    chrom = CHROM_LIST[tmp[0].strip()]
 
-			if( pos >= start and pos <= end):
-				if(find > 0):
-					res = '\t' + tmp[8] 
-				else:
-					res = chrom + '\t' + str(pos) + '\t' + tmp[8]
-				find += 1
-				out.write(res)
-		
-	if(find == 0):
-		res = chrom + '\t' + str(pos) + '\n'
-		out.write(res)
-	else:
-		out.write('\n')
+
+    find =0
+    for i in range(0, len(geneLine)):
+        gene = geneLine[i]
+        tmp =   gene.strip().split(' ')
+
+        gChrom = tmp[0]
+
+        if(gChrom == chrom ):
+            start = int(tmp[3])
+            end = int(tmp[4])
+
+            if( pos >= start and pos <= end):
+                if(find > 0):
+                    res = '\t' + tmp[8]
+                else:
+                    res = chrom + '\t' + str(pos) + '\t' + tmp[8]
+                find += 1
+                out.write(res)
+
+    if(find == 0):
+        res = chrom + '\t' + str(pos) + '\n'
+        out.write(res)
+    else:
+        out.write('\n')
 out.close()
 
 
