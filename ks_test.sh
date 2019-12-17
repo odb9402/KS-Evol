@@ -1,5 +1,7 @@
 #!/bin/bash
 
+core_num=15
+
 function description
 {
         echo -e "\t<USAGE of KS_test>"
@@ -66,8 +68,8 @@ echo -e " The output file name is : $2"
 # Where t0 is the specific time point.
 #
 ############################################################
-echo -e "$(date)> Step 1: Make KS_test Input . . . \n"
-python $src_dir"prog1_0_ksInput.py" -i $1
+#echo -e "$(date)> Step 1: Make KS_test Input . . . \n"
+#python $src_dir"prog1_0_ksInput.py" -i $1
 
 ###### 02.Binomial sampling  ###############################
 #
@@ -76,8 +78,22 @@ python $src_dir"prog1_0_ksInput.py" -i $1
 #
 ############################################################
 echo -e "$(date)>: Step 2: Binomial sampling for bootstrapping to make null hypothesis. . .\n"
-python $src_dir"prog2_binSampling.py" -n $sampleNum -t $timePoint -i 0_result.tsv -o 1_binSampling.tsv 
-exit 1
+
+n_proc=15
+n_proc_10=$(expr 10 + $n_proc)
+
+line=$(wc -l < 0_result.tsv)
+line_tp=$(expr $line '/' $timePoint)
+
+line_tp_each=$(expr $line_tp '/' $n_proc)
+remain_lines=$(expr $line_tp '%' $n_proc)
+
+split_lines=$(expr $line_tp_each '*' $timePoint)
+
+split -l $split_lines -d --numeric-suffixes=10 0_result.tsv
+
+#$src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i 0_result.tsv -o 1_binSampling.tsv
+seq 10 $n_proc_10 | parallel $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_binSampling_{}.tsv
 
 ###### 03.Make histogram of binomial samples  ##############
 #

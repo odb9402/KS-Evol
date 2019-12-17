@@ -6,7 +6,6 @@
 #include <math.h>
 #include <time.h>
 #include <stddef.h>
-#include <pthread.h>
 
 #define NTHREADS 15
 
@@ -15,31 +14,18 @@
 
 #define FILE_LENGTH_LIMIT 100
 
-void print_progress(size_t count, size_t max)
-{
-	const char prefix[] = "Progress: [";
-	const char suffix[] = "]";
-	const size_t prefix_length = sizeof(prefix) - 1;
-	const size_t suffix_length = sizeof(suffix) - 1;
-	char *buffer = calloc(max + prefix_length + suffix_length + 1, 1); // +1 for \0
-	size_t i = 0;
-
-	strcpy(buffer, prefix);
-	for (; i < max; ++i)
-	{
-		buffer[prefix_length + i] = i < count ? '#' : ' ';
-	}
-
-	strcpy(&buffer[prefix_length + i], suffix);
-	printf("\b%c[2K\r%s\n", 27, buffer);
-	fflush(stdout);
-	free(buffer);
-}
 
 const char *argp_program_version = "binSampling 1.0";
 const char *argp_program_bug_address = "<dhehdqls@gmail.com>";
 
 gsl_rng* gsl_rng_bin; //GSL global random number generator
+
+void print_usage(){
+    printf("\t<USAGE of binSampling>\n");
+    printf("\tbinSampling will generate simulation data which follows a binomial distribution\n");
+    printf("\tbased on a null hypothesis of the time-dependent allele frequency data.\n\n");
+    printf("\tbinSampling -n <number of samplings> -t <timepoints> -i <input> -o <output> \n\n");
+}
 
 int check_file_len(char* filename){
     FILE *fp;
@@ -59,14 +45,23 @@ int check_file_len(char* filename){
 
 double get_p_0(int* alts, int* refs, int time_points){
     int alt_sum = 0;
+    int ref_sum = 0;
+    
     for(int i = 0; i < time_points; i++)
         alt_sum += alts[i];
-    int ref_sum = 0;
-    for(int i = 0; i < time_points; i++)
         ref_sum += refs[i];
+    
     return alt_sum/(double)(ref_sum + alt_sum);
 }
 
+double _threads_bin_sampling(int thread_num, double** bin_samples, double p_o, int* refs, int* alts){
+    int total_n;
+    for(int i=0; i<time_points; i++){
+        total_n = refs[i] + alts[i];
+        for(int j=0; j<sample_num; j++){
+            bin_samples[i][j] = gsl_ran_binomial(gsl_rng_bin, p_0, total_n)/(double)total_n;
+        }
+}
 
 int main(int argc, char* argv[]){
     int time_points = 0;
@@ -78,8 +73,10 @@ int main(int argc, char* argv[]){
     int allele_len = -1;
     
     int opt;
-    while((opt=getopt(argc, argv, "t:n:i:o:")) != -1 ){
+    while((opt=getopt(argc, argv, "ht:n:i:o:")) != -1 ){
         switch(opt){
+            case 'h':
+                print_usage();
             case 't':
                 time_points = atoi(optarg);
                 break;
@@ -88,15 +85,21 @@ int main(int argc, char* argv[]){
                 break;
             case 'i':
                 input_name = malloc(sizeof(char)*sizeof(optarg));
-                if(optarg==NULL)
+                if(optarg==NULL){
                     printf("-i need a second argument as the input file name.\n");
+                    print_usage();
+                    return -1;
+                }
                 else
                     strcpy(input_name, optarg);
                 break;
             case 'o':
                 output_name = malloc(sizeof(char)*sizeof(optarg));
-                if(optarg==NULL)
+                if(optarg==NULL){
                     printf("-o need a second argument as the output file name.\n");
+                    print_usage();
+                    return -1;
+                }
                 else
                     strcpy(output_name, optarg);
                 break;
@@ -117,9 +120,13 @@ int main(int argc, char* argv[]){
     
     if(input_name == NULL){
         printf("option -i requires an input file name.\n");
+        print_usage();
+        return -1;
     }
     if(output_name == NULL){
         printf("option -o requires an output file name.\n");
+        print_usage();
+        return -1;
     }
     
     printf("Time points : %d\n", time_points);
@@ -142,7 +149,7 @@ int main(int argc, char* argv[]){
     allele_len = check_file_len(input_name);
     printf("Number of alleles of %s : %d \n\n",input_name,allele_len);
     
-    ///////////////////////////////////
+    ///////////////////// The actual process begin. ///////////////////////
     
     int* refs = malloc(sizeof(int)*time_points);
     int* alts = malloc(sizeof(int)*time_points);
@@ -167,6 +174,7 @@ int main(int argc, char* argv[]){
         bin_samples[i] = malloc(sizeof(double)*sample_num);
     }
     
+    ////////////////// KS distance sampling loops /////////////////////////
     start = clock();
     for(int allele_num=0; allele_num<allele_len; allele_num++){
         //File read and extract counts
@@ -222,10 +230,10 @@ int main(int argc, char* argv[]){
         }
         fprintf(output_fp, "\n");
         
-        if((allele_num % 10000) == 0){
+        if((allele_num % 1000) == 0 && allele_num != 0){
             end = clock();
             printf("Sampling for the %d`th allele . . . .  :%f", allele_num, (double)(end-start)/CLOCKS_PER_SEC);
-            printf("\tETA : %f\n", (allele_len/10000)*(double)(end-start)/CLOCKS_PER_SEC);
+            printf("\tETA : %fsec\n", (allele_len/1000)*(double)(end-start)/CLOCKS_PER_SEC);
             start = clock();
         }
     }
