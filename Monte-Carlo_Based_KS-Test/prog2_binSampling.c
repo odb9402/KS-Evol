@@ -47,21 +47,14 @@ double get_p_0(int* alts, int* refs, int time_points){
     int alt_sum = 0;
     int ref_sum = 0;
     
-    for(int i = 0; i < time_points; i++)
+    for(int i = 0; i < time_points; i++){
         alt_sum += alts[i];
         ref_sum += refs[i];
+    }
     
     return alt_sum/(double)(ref_sum + alt_sum);
 }
 
-double _threads_bin_sampling(int thread_num, double** bin_samples, double p_o, int* refs, int* alts){
-    int total_n;
-    for(int i=0; i<time_points; i++){
-        total_n = refs[i] + alts[i];
-        for(int j=0; j<sample_num; j++){
-            bin_samples[i][j] = gsl_ran_binomial(gsl_rng_bin, p_0, total_n)/(double)total_n;
-        }
-}
 
 int main(int argc, char* argv[]){
     int time_points = 0;
