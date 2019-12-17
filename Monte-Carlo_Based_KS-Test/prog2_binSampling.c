@@ -5,11 +5,41 @@
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+#include <stddef.h>
+#include <pthread.h>
+
+#define NTHREADS 15
+
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 
 #define FILE_LENGTH_LIMIT 100
 
+void print_progress(size_t count, size_t max)
+{
+	const char prefix[] = "Progress: [";
+	const char suffix[] = "]";
+	const size_t prefix_length = sizeof(prefix) - 1;
+	const size_t suffix_length = sizeof(suffix) - 1;
+	char *buffer = calloc(max + prefix_length + suffix_length + 1, 1); // +1 for \0
+	size_t i = 0;
+
+	strcpy(buffer, prefix);
+	for (; i < max; ++i)
+	{
+		buffer[prefix_length + i] = i < count ? '#' : ' ';
+	}
+
+	strcpy(&buffer[prefix_length + i], suffix);
+	printf("\b%c[2K\r%s\n", 27, buffer);
+	fflush(stdout);
+	free(buffer);
+}
+
 const char *argp_program_version = "binSampling 1.0";
 const char *argp_program_bug_address = "<dhehdqls@gmail.com>";
+
+gsl_rng* gsl_rng_bin; //GSL global random number generator
 
 int check_file_len(char* filename){
     FILE *fp;
@@ -30,27 +60,15 @@ int check_file_len(char* filename){
 double get_p_0(int* alts, int* refs, int time_points){
     int alt_sum = 0;
     for(int i = 0; i < time_points; i++)
-        sum += counts[i];
+        alt_sum += alts[i];
     int ref_sum = 0;
     for(int i = 0; i < time_points; i++)
-        sum += counts[i];
-    return alt_sum/double(ref_sum + alt_sum);
+        ref_sum += refs[i];
+    return alt_sum/(double)(ref_sum + alt_sum);
 }
 
-double binomial_sampling(int n, double p){
-    /* 
-    *
-    *
-    */
-    double rand_u = 0.0;
-    srand(time(NULL));
-    rand_u = (double)rand()/RAND_MAX;
-    
-    
-}
 
 int main(int argc, char* argv[]){
-    printf("??");
     int time_points = 0;
     int sample_num = 0;
     char* input_name;// = malloc(sizeof(char) * FILE_LENGTH_LIMIT);
@@ -120,9 +138,9 @@ int main(int argc, char* argv[]){
         return 0;
     }
     
-    printf("Count the total number of alleles . . . . \n");
+    printf("Count the total number of alleles . . . . \n\n");
     allele_len = check_file_len(input_name);
-    printf("Number of alleles of %s : %d \n",input_name,allele_len);
+    printf("Number of alleles of %s : %d \n\n",input_name,allele_len);
     
     ///////////////////////////////////
     
@@ -130,18 +148,28 @@ int main(int argc, char* argv[]){
     int* alts = malloc(sizeof(int)*time_points);
     char* spliter;
     char lines[4096];
-    int idx = 0;
     int col_idx =0;
-    int alt_sum = 0;
-    int ref_sum = 0;
     double p_0 = 0;
     double* p_mt = malloc(sizeof(double)*time_points);
     double* ks = malloc(sizeof(double)*time_points);
     double max_ks = 0;
     double** bin_samples = malloc(sizeof(double*)*time_points);
+    double* bin_samples_ks = malloc(sizeof(double)*sample_num);
     int total_n = 0;
+    clock_t start, end;
     
-    while(1){
+    const gsl_rng_type *T;
+    gsl_rng_env_setup();
+    T = gsl_rng_default;
+    gsl_rng_bin = gsl_rng_alloc(T);
+    
+    for(int i=0; i<time_points; i++){
+        bin_samples[i] = malloc(sizeof(double)*sample_num);
+    }
+    
+    start = clock();
+    for(int allele_num=0; allele_num<allele_len; allele_num++){
+        //File read and extract counts
         for(int i=0; i<time_points; i++){
             if(fgets(lines, 4096, input_fp)==NULL){
                 printf("File read error.\n");
@@ -150,20 +178,18 @@ int main(int argc, char* argv[]){
             spliter = strtok(lines,"\t");
             while(spliter != NULL){
                 col_idx++;
-//                printf("%s\n", spliter);
                 spliter = strtok(NULL,"\t");
                 if(col_idx==5)
                     refs[i]=atoi(spliter);
                 if(col_idx==6)
                     alts[i]=atoi(spliter);
             }
-//          printf("refs: %d, alts: %d\n",refs[i], alts[i]);
             col_idx = 0;
         }
         
         p_0 = get_p_0(alts, refs, time_points); 
         for(int i=0; i<time_points; i++)
-            p_mt[i]=alts[i]/double(alts[i]+refs[i]);
+            p_mt[i]=alts[i]/(double)(alts[i]+refs[i]);
         for(int i=0; i<time_points; i++){
             ks[i]=fabs(p_0 - p_mt[i]);
             if(ks[i]>max_ks)
@@ -171,20 +197,49 @@ int main(int argc, char* argv[]){
         }
         
         // Binomial sampling for each timepoints
+        // bin_samples['time_points']['sample_id']
         for(int i=0; i<time_points; i++){
-            bin_samples[i] = malloc(sizeof(double)*sample_num);
             total_n = refs[i] + alts[i];
             for(int j=0; j<sample_num; j++){
-                bin_samples[i][j] = binomial_sampling(total_n, p_0);
-            
+                bin_samples[i][j] = gsl_ran_binomial(gsl_rng_bin, p_0, total_n)/(double)total_n;
             }
         }
         
-        return 0;
+        //Binomial sample values to ks distances from p_0. 
+        for(int i=0; i<sample_num; i++){
+            max_ks = 0;
+            for(int j=0;j<time_points;j++){
+                bin_samples[j][i] = fabs(bin_samples[j][i] - p_0); // No extra allocations.
+                if(bin_samples[j][i] > max_ks)
+                    max_ks = bin_samples[j][i];
+            }
+            bin_samples_ks[i] = max_ks;
+        }
+        
+        
+        for(int i=0; i<sample_num; i++){
+            fprintf(output_fp, "%f\t", bin_samples_ks[i]);
+        }
+        fprintf(output_fp, "\n");
+        
+        if((allele_num % 10000) == 0){
+            end = clock();
+            printf("Sampling for the %d`th allele . . . .  :%f", allele_num, (double)(end-start)/CLOCKS_PER_SEC);
+            printf("\tETA : %f\n", (allele_len/10000)*(double)(end-start)/CLOCKS_PER_SEC);
+            start = clock();
+        }
     }
     
+    fclose(output_fp);
     free(p_mt);
     free(ks);
     free(refs);
     free(alts);
+    free(bin_samples_ks);
+    for(int i=0; i<time_points; i++)
+        free(bin_samples[i]);
+    free(bin_samples);
+    free(spliter);
+    gsl_rng_free(gsl_rng_bin);
+    return 0;
 }
