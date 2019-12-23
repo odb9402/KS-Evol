@@ -4,7 +4,7 @@ import sys
 import argparse
 
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument("-h", "--histogram", help="A histogram input file name")
+arg_parser.add_argument("-hist", "--histogram", help="A histogram input file name")
 arg_parser.add_argument("-k", "--ksFile", help="A ks-test input file name")
 arg_parser.add_argument("-o", "--output", help="An output file name")
 arg_parser.add_argument("-n", "--sampleNum", default=50000, help="A sampling size")

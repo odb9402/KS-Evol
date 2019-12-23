@@ -1,7 +1,5 @@
 #!/bin/bash
 
-core_num=15
-
 function description
 {
         echo -e "\t<USAGE of KS_test>"
@@ -92,17 +90,15 @@ split_lines=$(expr $line_tp_each '*' $timePoint)
 
 split -l $split_lines -d --numeric-suffixes=10 0_result.tsv
 
-#$src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i 0_result.tsv -o 1_binSampling.tsv
+seq 10 $n_proc_10 | parallel $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_binSampling_{}.tsv
 
-#seq 10 $n_proc_10 | parallel $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_binSampling_{}.tsv
-
-SET=$(seq 10 $n_proc_10)
-
-for i in $SET
-do
-    $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x$i -o 1_binSampling_$i.tsv &
-done
-wait
+cat 1_binSampling_*.tsv > 1_binSampling.tsv
+#SET=$(seq 10 $n_proc_10)
+#for i in $SET
+#do
+#    $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x$i -o 1_binSampling_$i.tsv &
+#done
+#wait
 
 ###### 03.Make histogram of binomial samples  ##############
 #
@@ -118,7 +114,7 @@ python $src_dir"prog2_ksStar_Dist.py" -i 1_binSampling.tsv -o 2_p0_histogram.jso
 #
 ############################################################
 echo -e "$(date)> Step 4: Make p-values of each KS distances for all time-points. . . \n"
-python $src_dir"prog3_ksPercentile.py" -n $sampleNum -h 2_p0_histogram.json -k 2_ksTest.tsv -o 3_ksPvals.tsv
+python $src_dir"prog3_ksPercentile.py" -n $sampleNum -hist 2_p0_histogram.json -k 2_ksTest.tsv -o 3_ksPvals.tsv
 
 ###### 05.Make KS-test input ###############################
 #
@@ -126,13 +122,15 @@ python $src_dir"prog3_ksPercentile.py" -n $sampleNum -h 2_p0_histogram.json -k 2
 #
 ############################################################
 echo -e "$(date)> Step 5:Convert allele depths data to summerize KS distances for all time-points. . . \n"
-python $src_dir"prog4_Result.py" 0_result.tsv 4_ksResult.tsv
+python $src_dir"prog4_Result.py" -i 0_result.tsv -o 4_ksResult.tsv
 
 ###### 06.Make KS-test input ###############################
 #
 ############################################################
 echo -e "$(date)> Step 6: Merge and take the maximum distance from allele depths data for all time-points. . . \n"
-python $src_dir"prog5_mergeKS.py" 4_ksResult.tsv 3_ksPvals.tsv 5_merged_ks.tsv
+python $src_dir"prog5_mergeKS.py" -t $timePoint -i 4_ksResult.tsv -p 3_ksPvals.tsv -o 5_merged_ks.tsv
 
-awk -F "," '{print $1,$2,$3,$4,$5,$6,$7,$8,$9}' 5_merged_ks.tsv | sort -rk9 | awk '{print NR,$0}' > $final_output
+awk -F "," '{print $1,$2,$3,$4,$5,$6,$7,$8,$9}' 5_merged_ks.tsv | sort -gk9 | awk '{print NR,$0}' > $final_output
 
+rm x*
+rm 1_binSampling_*.tsv
