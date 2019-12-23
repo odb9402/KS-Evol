@@ -79,7 +79,7 @@ echo -e " The output file name is : $2"
 ############################################################
 echo -e "$(date)>: Step 2: Binomial sampling for bootstrapping to make null hypothesis. . .\n"
 
-n_proc=15
+n_proc=22
 n_proc_10=$(expr 10 + $n_proc)
 
 line=$(wc -l < 0_result.tsv)
@@ -93,7 +93,16 @@ split_lines=$(expr $line_tp_each '*' $timePoint)
 split -l $split_lines -d --numeric-suffixes=10 0_result.tsv
 
 #$src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i 0_result.tsv -o 1_binSampling.tsv
-seq 10 $n_proc_10 | parallel $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_binSampling_{}.tsv
+
+#seq 10 $n_proc_10 | parallel $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_binSampling_{}.tsv
+
+SET=$(seq 10 $n_proc_10)
+
+for i in $SET
+do
+    $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x$i -o 1_binSampling_$i.tsv &
+done
+wait
 
 ###### 03.Make histogram of binomial samples  ##############
 #

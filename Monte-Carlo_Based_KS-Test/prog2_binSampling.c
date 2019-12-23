@@ -127,6 +127,10 @@ int main(int argc, char* argv[]){
     printf("The output file : %s\n", output_name);
     printf("Sample num : %d\n", sample_num);
     
+    printf("Count the total number of alleles . . . . \n\n");
+    allele_len = check_file_len(input_name);
+    printf("Number of alleles of %s : %d \n\n",input_name,allele_len);
+    
     input_fp = fopen(input_name, "r");
     if (input_fp==NULL){
         printf("Could not open file %s. \n", input_name);
@@ -138,16 +142,12 @@ int main(int argc, char* argv[]){
         return 0;
     }
     
-    printf("Count the total number of alleles . . . . \n\n");
-    allele_len = check_file_len(input_name);
-    printf("Number of alleles of %s : %d \n\n",input_name,allele_len);
-    
     ///////////////////// The actual process begin. ///////////////////////
     
     int* refs = malloc(sizeof(int)*time_points);
     int* alts = malloc(sizeof(int)*time_points);
     char* spliter;
-    char lines[4096];
+    char* lines = NULL;
     int col_idx =0;
     double p_0 = 0;
     double* p_mt = malloc(sizeof(double)*time_points);
@@ -157,6 +157,7 @@ int main(int argc, char* argv[]){
     double* bin_samples_ks = malloc(sizeof(double)*sample_num);
     int total_n = 0;
     clock_t start, end;
+    size_t len = 0;
     
     const gsl_rng_type *T;
     gsl_rng_env_setup();
@@ -172,8 +173,11 @@ int main(int argc, char* argv[]){
     for(int allele_num=0; allele_num<allele_len; allele_num++){
         //File read and extract counts
         for(int i=0; i<time_points; i++){
-            if(fgets(lines, 4096, input_fp)==NULL){
+            //if(fgets(lines, 8193, input_fp)==NULL){
+            if(getline(&lines, &len, input_fp) == -1){
                 printf("File read error.\n");
+                fclose(input_fp);
+                fclose(output_fp);
                 return -1;
             }
             spliter = strtok(lines,"\t");
@@ -232,6 +236,7 @@ int main(int argc, char* argv[]){
     }
     
     fclose(output_fp);
+    fclose(input_fp);
     free(p_mt);
     free(ks);
     free(refs);
