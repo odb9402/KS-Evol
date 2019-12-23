@@ -170,12 +170,12 @@ int main(int argc, char* argv[]){
     
     ////////////////// KS distance sampling loops /////////////////////////
     start = clock();
-    for(int allele_num=0; allele_num<allele_len; allele_num++){
+    for(int allele_num=0; allele_num<(allele_len/time_points); allele_num++){
         //File read and extract counts
         for(int i=0; i<time_points; i++){
             //if(fgets(lines, 8193, input_fp)==NULL){
             if(getline(&lines, &len, input_fp) == -1){
-                printf("File read error.\n");
+                printf("File read error. %d`th allele\n", allele_num);
                 fclose(input_fp);
                 fclose(output_fp);
                 return -1;
@@ -230,7 +230,7 @@ int main(int argc, char* argv[]){
         if((allele_num % 1000) == 0 && allele_num != 0){
             end = clock();
             printf("Sampling for the %d`th allele . . . .  :%f", allele_num, (double)(end-start)/CLOCKS_PER_SEC);
-            printf("\tETA : %fsec\n", (allele_len/1000)*(double)(end-start)/CLOCKS_PER_SEC);
+            printf("\tETA : %fsec\n", (allele_len/(1000*time_points))*(double)(end-start)/CLOCKS_PER_SEC);
             start = clock();
         }
     }
