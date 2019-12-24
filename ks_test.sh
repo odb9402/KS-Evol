@@ -66,8 +66,8 @@ echo -e " The output file name is : $2"
 # Where t0 is the specific time point.
 #
 ############################################################
-echo -e "$(date)> Step 1: Make KS_test Input . . . \n"
-python $src_dir"prog1_0_ksInput.py" -i $1
+#echo -e "$(date)> Step 1: Make KS_test Input . . . \n"
+#python $src_dir"prog1_0_ksInput.py" -i $1
 
 ###### 02.Binomial sampling  ###############################
 #
@@ -90,16 +90,12 @@ split_lines=$(expr $line_tp_each '*' $timePoint)
 
 split -l $split_lines -d --numeric-suffixes=10 0_result.tsv
 
-seq 10 $n_proc_10 | parallel --citation $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_binSampling_{}.tsv
+seq 10 $n_proc_10 | parallel $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_binSampling_{}.tsv
 
-cat 1_binSampling_*.tsv > 1_binSampling.tsv
-#SET=$(seq 10 $n_proc_10)
-#for i in $SET
-#do
-#    $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x$i -o 1_binSampling_$i.tsv &
-#done
-#wait
-
+for ((i=10;i<$n_proc_10;i++))
+do
+    cat 1_binSampling_$i.tsv >> 1_binSampling.tsv
+done
 ###### 03.Make histogram of binomial samples  ##############
 #
 ############################################################
@@ -122,7 +118,7 @@ python $src_dir"prog3_ksPercentile.py" -n $sampleNum -hist 2_p0_histogram.json -
 #
 ############################################################
 echo -e "$(date)> Step 5:Convert allele depths data to summerize KS distances for all time-points. . . \n"
-python $src_dir"prog4_Result.py" -i 2_ksTest.tsv -o 4_ksResult.tsv
+python $src_dir"prog4_Result.py" -i 0_result.tsv -o 4_ksResult.tsv
 
 ###### 06.Make KS-test input ###############################
 #

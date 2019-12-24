@@ -25,10 +25,15 @@ oFile = open(output, 'w')
 pVals = pFile.readlines()
 
 
-oFile.write('CHROM,POS,TIMEPOINT,REF,ALT,TOTAL,ALT_ALL,P_ALL,pValue,P0,P140,P240,P335,P415,P505,P585,P665,P745,P825,P910,P1000')
+oFile.write('CHROM,POS,TIMEPOINT,REF,ALT,TOTAL,ALT_ALL,P_ALL,pValue,')
+for i in range(timePoint - 1):
+    oFile.write(str(i))
+    oFile.write(',')
+oFile.write(str(timePoint-1))
 oFile.write('\n')
 p=0
 iFile.readline()
+
 while (True):
     line = []
 
