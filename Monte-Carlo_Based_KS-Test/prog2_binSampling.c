@@ -222,9 +222,8 @@ int main(int argc, char* argv[]){
         }
         
         
-        for(int i=0; i<sample_num; i++){
+        for(int i=0; i<sample_num; i++)
             fprintf(output_fp, "%f\t", bin_samples_ks[i]);
-        }
         fprintf(output_fp, "\n");
         
         if((allele_num % 1000) == 0 && allele_num != 0){

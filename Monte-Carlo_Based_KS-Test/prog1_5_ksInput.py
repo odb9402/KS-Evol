@@ -1,16 +1,23 @@
-inputFile='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.merge.csv'
-outputFile='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.merge.2.csv'
+#inputFile='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.merge.csv'
+#outputFile='E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.merge.2.csv'
 
-TIMEPOINT=12
-TIMELIST=[0,140,240,335,415,505,585,665,745,825,910,1000]
-file = open(inputFile)
+import argparse
 
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument("-i", "--input", help="KS-distances input file name")
+arg_parser.add_argument("-p", "--pvalueInput", help="P-values file name")
+arg_parser.add_argument("-o", "--output", help="An output file name")
+arg_parser.add_argument("-t", "--timepoints", help="Number of timepoint")
 
+args = arg_parser.parse_args()
+
+TIMEPOINT=args.timepoints
+TIMELIST=["t{}".format(i) for i in range(TIMEPOINT)]
+file = open(args.input,'r')
+oFile = open(outputFile,'w')
 time=0
 
 header = file.readline()
-
-oFile = open(outputFile,'w')
 
 while(True):
 
