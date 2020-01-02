@@ -11,7 +11,7 @@ args = arg_parser.parse_args()
 
 timePoint = int(args.timepoints)
 
-inFileName = args.input 
+inFileName = args.input
 inFile = open(inFileName, 'r')
 
 outFileName = args.output
@@ -51,7 +51,7 @@ while(True):
     ks = [abs(p_0 - p) for p in p_mt ]
 
     maxKS = max(ks)
-    val = '%.4f'%maxKS
+    val = maxKS
     outFile.write(str(val) + '\n')
 
 outFile.close()
