@@ -67,18 +67,22 @@ echo -e " The output file name is : $2"
 #
 ############################################################
 echo -e "$(date)>: Make KS test depths from $1 . . . \n"
-if [ $1 == *.sync ]
+if [[ $1 == *.sync ]]
 then
     echo -e "$(date)>: $1 is a mpileup data ( .sync ) \n"
-    python sync2AD.py $1
-elif [ $1 == *.vcf ]
+    python $src_dir"/../sync2AD.py" $1
+    echo -e "$(date)>: Make KS_test Input . . . \n"
+    python $src_dir"prog1_0_ksInput.py" -i $(dirname $1)
+
+elif [[ $1 == *.vcf ]]
 then
     echo -e "$(date)>: $1 is a vcf data ( .vcf ) \n"
     python vcf2AD.py $1
+else
+    echo -e "$(date)>: $1 is not both of .vcf or .sync files."
+    exit
 fi
 
-echo -e "$(date)>: Make KS_test Input . . . \n"
-python $src_dir"prog1_0_ksInput.py" -i $1
 
 ###### 02.Binomial sampling  ###############################
 #
@@ -88,7 +92,13 @@ python $src_dir"prog1_0_ksInput.py" -i $1
 ############################################################
 echo -e "$(date)>: Get p-values for each allele using bootstrapping. . .\n"
 
-n_proc=22
+n_proc_raw=$(nproc)
+n_proc=$(expr $n_proc_raw '-' 1)
+if [[ "$n_proc_raw" > 22 ]]
+then
+    n_proc=22
+fi
+
 n_proc_10=$(expr 10 + $n_proc)
 
 line=$(wc -l < 0_result.tsv)
@@ -115,22 +125,6 @@ do
     rm 1_ks_pvals_$i.tsv
     rm x$i
 done
-###### 03.Make histogram of binomial samples  ##############
-#
-############################################################
-#echo -e "$(date)> Step 3: Make histograms of binomial samples to calculate p-values of KS distances. . .\n"
-#python $src_dir"prog2_ksTest.py" -t $timePoint -i 0_result.tsv -o 2_ksTest.tsv
-#python $src_dir"prog2_ksStar_Dist.py" -i 1_binSampling.tsv -o 2_p0_histogram.json
-
-###### 04.Calculate p-values  ##############################
-#
-# It calculates p-values based on the location of KS-distances
-# of allele frequencies among the histogram of binomial samples
-#
-############################################################
-#echo -e "$(date)> Step 4: Make p-values of each KS distances for all time-points. . . \n"
-#python $src_dir"prog3_ksPercentile.py" -n $sampleNum -hist 2_p0_histogram.json -k 2_ksTest.tsv -o 3_ksPvals.tsv
-
 ###### 05.Make KS-test input ###############################
 #
 # It takes the maximum p-values for
