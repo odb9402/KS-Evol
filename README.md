@@ -31,7 +31,7 @@ e.g >
 
 If you have several **fastq sequence files for each time point** and their reference file, it gives the pipeline to handle the whole processes including **sequence alignments, variant calling and its statistical test** with KS distance.
 
-To use the pipeline, all the fastq files should be included at the working directory so that the pipeline automatically detect the fastq files.
+To use the pipeline, all the fastq files should be included at the working directory so that the pipeline automatically detects the fastq files.
 
 ```
 ./allele_depth_pipe.sh <reference>
@@ -60,7 +60,7 @@ ATTGCGG GGTGCGG
 
 3/21 ~ 0.142 ??
 
-However, what we want to do is **giving statistical score ( confidences, p-value, ... etc ) that can represent significant of the allele frequency** based on some statistical measurement as like p-value of Poisson distribution.
+However, what we want to do is **giving statistical score ( confidences, p-value, ... etc ) that can represent the significance of the allele frequency** based on some statistical measurement as like p-value of Poisson distribution.
 
 After giving scores for each SNP, **we can rank them** with the score and decide the threshold value to determine which SNPs are important or not based on the threshold.
 
