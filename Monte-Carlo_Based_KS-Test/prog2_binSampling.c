@@ -1,3 +1,6 @@
+/*
+
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -7,29 +10,32 @@
 #include <time.h>
 #include <stddef.h>
 
-
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_histogram.h>
 
-#define HIST_BIN_SIZE 1000
+#define HIST_BIN_SIZE 100000
 #define FILE_LENGTH_LIMIT 100
-
 
 const char *argp_program_version = "binSampling 1.0";
 const char *argp_program_bug_address = "<dhehdqls@gmail.com>";
-
 gsl_rng* gsl_rng_bin; //GSL global random number generator
 gsl_histogram* gsl_hist; //GSL global histogram allocator 
 
 void print_usage(){
     printf("\t<USAGE of binSampling>\n");
-    printf("\tbinSampling will generate simulation data which follows a binomial distribution\n");
+    printf("\tbinSampling will generate p-values based on bootstrapping that samples follow a binomial distribution\n");
     printf("\tbased on a null hypothesis of the time-dependent allele frequency data.\n\n");
     printf("\tbinSampling -n <number of samplings> -t <timepoints> -i <input> -o <output> \n\n");
 }
 
 int check_file_len(char* filename){
+    /*
+    * Check the file length of allele depth file.
+    * The number of allele will be divided with its number of timepoints.
+    *
+    * return: The length of allele depth file.
+    */
     FILE *fp;
     fp = fopen(filename, "r");
     if (fp==NULL){
@@ -46,6 +52,12 @@ int check_file_len(char* filename){
 }
 
 double get_p_0(int* alts, int* refs, int time_points){
+    /*
+    * Get a null hypothesis from given allele depths for all timepoints.
+    * The null hypothesis represents the probability of occuring minor allele(SNP).
+    *  
+    * return: The null hypothesis of SNP.
+    */
     int alt_sum = 0;
     int ref_sum = 0;
     
@@ -86,7 +98,8 @@ double get_pval(int sampling_num, double ks){
     return p_val;
 }
 
-int main(int argc, char* argv[]){
+int 
+main(int argc, char* argv[]){
     int time_points = 0;
     int sample_num = 0;
     char* input_name;// = malloc(sizeof(char) * FILE_LENGTH_LIMIT);
@@ -173,7 +186,7 @@ int main(int argc, char* argv[]){
     }
     
     ///////////////////// The actual process begin. ///////////////////////
-    
+    double eps = 1E-10L;
     int* refs = malloc(sizeof(int)*time_points);
     int* alts = malloc(sizeof(int)*time_points);
     char* spliter;
@@ -256,7 +269,7 @@ int main(int argc, char* argv[]){
             }
         }
         
-        ks_pvals[allele_num] = get_pval(sample_num, max_ks);
+        ks_pvals[allele_num] = get_pval(sample_num, max_ks) + eps;
         
         if((allele_num % 1000) == 0 && allele_num != 0){
             end = clock();
@@ -271,9 +284,10 @@ int main(int argc, char* argv[]){
         fprintf(output_fp, "%lf\n", ks_pvals[i]);
     }
     
-    gsl_histogram_free(gsl_hist);
     fclose(output_fp);
     fclose(input_fp);
+    gsl_histogram_free(gsl_hist);
+    gsl_rng_free(gsl_rng_bin);
     free(p_mt);
     free(ks);
     free(refs);
@@ -283,6 +297,5 @@ int main(int argc, char* argv[]){
         free(bin_samples[i]);
     free(bin_samples);
     free(spliter);
-    gsl_rng_free(gsl_rng_bin);
     return 0;
 }

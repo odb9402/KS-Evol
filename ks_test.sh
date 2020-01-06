@@ -66,8 +66,8 @@ echo -e " The output file name is : $2"
 # Where t0 is the specific time point.
 #
 ############################################################
-#echo -e "$(date)> Step 1: Make KS_test Input . . . \n"
-#python $src_dir"prog1_0_ksInput.py" -i $1
+echo -e "$(date)> Step 1: Make KS_test Input . . . \n"
+python $src_dir"prog1_0_ksInput.py" -i $1
 
 ###### 02.Binomial sampling  ###############################
 #
