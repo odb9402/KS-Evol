@@ -18,11 +18,12 @@ Since it uses **GSL**(GNU Scientific Library) to optimize bootstrapping processe
 
 ### 1. For a mpileup (.sync) input
 
+Note that the code already contains "sample_data.sync" at the main directory.
 ```
 ./ks_test.sh -n <the number of samples> -t <timepoints> <input> <output>
 
 e.g >
-./ks_test.sh -n 100000 -t 9 my_variants.sync my_output.tsv
+./ks_test.sh -n 100000 -t 9 sample_data.sync sample_output.tsv
 ```
 
 
