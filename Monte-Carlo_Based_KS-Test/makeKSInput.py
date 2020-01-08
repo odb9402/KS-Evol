@@ -33,6 +33,6 @@ print("{} files total : It might imply the dataset has {} timepoints.".format(
 refAlt = pd.concat(timeList, ignore_index=True)
 refAlt = refAlt.sort_values(by = ['CHROM', 'POS', 'TIME'])
 
-outName = '0_result.tsv'
+outName = 'ks_input.tsv'
 print(" Merged KS-test input is writing. . .")
 refAlt.to_csv(outName, sep='\t', header=None, index=None)

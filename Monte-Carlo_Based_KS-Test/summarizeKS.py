@@ -10,7 +10,7 @@ arg_parser.add_argument("-o", "--output", help="An output file name")
 args = arg_parser.parse_args()
 #input = "E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.merge.2.csv"
 #output = "E:/evolutinoarypattern/RMB2_B10.freebayes_snps/RMB2_B10.res.2.csv"
-input = args.input 
+input = args.input
 output = args.output
 data = pd.read_csv( input,
                     sep='\t',
@@ -23,7 +23,3 @@ data['PMT'] = data['A_CNT'] / data['T_CNT']
 data['P0'] = data['A_CNT_ALL'] / data['T_CNT_ALL']
 
 data.to_csv(output, sep=',', index=False)
-
-
-
-

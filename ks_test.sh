@@ -72,7 +72,7 @@ then
     echo -e "$(date)>: $1 is a mpileup data ( .sync ) \n"
     python $src_dir"/../sync2AD.py" $1
     echo -e "$(date)>: Make KS_test Input . . . \n"
-    python $src_dir"prog1_0_ksInput.py" -i $(dirname $1)
+    python $src_dir"makeKSInput.py" -i $(dirname $1)
 
 elif [[ $1 == *.vcf ]]
 then
@@ -84,59 +84,60 @@ else
 fi
 
 
-###### 02.Binomial sampling  ###############################
+###### 02.Binomial sampling and get p-values ###############
 #
 # It generates KS distances between p0 based on binomial
 # samples.
 #
 ############################################################
 echo -e "$(date)>: Get p-values for each allele using bootstrapping. . .\n"
+$src_dir"getPvals" -n $sampleNum -t $timePoint -i ks_input.tsv -o ks_pvals.tsv
 
-n_proc_raw=$(nproc)
-n_proc=$(expr $n_proc_raw '-' 1)
-if [[ "$n_proc_raw" > 22 ]]
-then
-    n_proc=22
-fi
+#n_proc_raw=$(nproc)
+#n_proc=$(expr $n_proc_raw '-' 1)
+#if [[ "$n_proc_raw" > 22 ]]
+#then
+#    n_proc=22
+#fi
 
-n_proc_10=$(expr 10 + $n_proc)
+#n_proc_10=$(expr 10 + $n_proc)
 
-line=$(wc -l < 0_result.tsv)
-line_tp=$(expr $line '/' $timePoint)
+#line=$(wc -l < 0_result.tsv)
+#line_tp=$(expr $line '/' $timePoint)
 
-line_tp_each=$(expr $line_tp '/' $n_proc)
-remain_lines=$(expr $line_tp '%' $n_proc)
+#line_tp_each=$(expr $line_tp '/' $n_proc)
+#remain_lines=$(expr $line_tp '%' $n_proc)
 
-split_lines=$(expr $line_tp_each '*' $timePoint)
+#split_lines=$(expr $line_tp_each '*' $timePoint)
 
-split -l $split_lines -d --numeric-suffixes=10 0_result.tsv
+#split -l $split_lines -d --numeric-suffixes=10 ks_input.tsv
 
 #seq 10 $n_proc_10 | parallel -k $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x{} -o 1_ks_pvals_{}.tsv
 
-for ((i=10;i<=$n_proc_10;i++))
-do
-    $src_dir"prog2_binSampling" -n $sampleNum -t $timePoint -i x$i -o 1_ks_pvals_$i.tsv &
-done
-wait
+#for ((i=10;i<=$n_proc_10;i++))
+#do
+#    $src_dir"getPvals" -n $sampleNum -t $timePoint -i x$i -o ks_pvals_$i.tsv &
+#done
+#wait
 
-for ((i=10;i<=$n_proc_10;i++))
-do
-    cat 1_ks_pvals_$i.tsv >> 1_ks_pvals.tsv
-    rm 1_ks_pvals_$i.tsv
-    rm x$i
-done
-###### 05.Make KS-test input ###############################
+#for ((i=10;i<=$n_proc_10;i++))
+#do
+#    cat ks_pvals_$i.tsv >> ks_pvals.tsv
+#    rm ks_pvals_$i.tsv
+#    rm x$i
+#done
+###### 03.Make KS-test input ###############################
 #
 # It takes the maximum p-values for
 #
 ############################################################
-echo -e "$(date)> Step 5:Convert allele depths data to summerize KS distances for all time-points. . . \n"
-python $src_dir"prog4_Result.py" -i 0_result.tsv -o 4_ksResult.tsv
+echo -e "$(date)> Step 3:Convert allele depths data to summerize KS distances for all time-points. . . \n"
+python $src_dir"summarizeKS.py" -i ks_input.tsv -o ks_input_summarized.tsv
 
-###### 06.Make KS-test input ###############################
+###### 04.Make KS-test input ###############################
 #
 ############################################################
-echo -e "$(date)> Step 6: Merge and take the maximum distance from allele depths data for all time-points. . . \n"
-python $src_dir"prog5_mergeKS.py" -t $timePoint -i 4_ksResult.tsv -p 1_ks_pvals.tsv -o 5_merged_ks.tsv
+echo -e "$(date)> Step 4: Merge and take the maximum distance from allele depths data for all time-points. . . \n"
+python $src_dir"makeKSOutput.py" -t $timePoint -i ks_input_summarized.tsv -p ks_pvals.tsv -o ks_output.tsv
 
 awk -F "," '{print $1,$2,$3,$4,$5,$6,$7,$8,$9}' 5_merged_ks.tsv | sort -gk9 | awk '{print NR,$0}' > $final_output
