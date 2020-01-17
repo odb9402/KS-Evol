@@ -80,9 +80,8 @@ then
     python vcf2AD.py $1
 else
     echo -e "$(date)>: $1 is not both of .vcf or .sync files."
-    exit
+    #exit
 fi
-
 
 ###### 02.Binomial sampling and get p-values ###############
 #
@@ -140,4 +139,6 @@ python $src_dir"summarizeKS.py" -i ks_input.tsv -o ks_input_summarized.tsv
 echo -e "$(date)> Step 4: Merge and take the maximum distance from allele depths data for all time-points. . . \n"
 python $src_dir"makeKSOutput.py" -t $timePoint -i ks_input_summarized.tsv -p ks_pvals.tsv -o ks_output.tsv
 
-awk -F "," '{print $1,$2,$3,$4,$5,$6,$7,$8,$9}' 5_merged_ks.tsv | sort -gk9 | awk '{print NR,$0}' > $final_output
+awk '{FS="\t"; OFS="\t"; print $1,$2,$4,$5,$6,$7,$9}' ks_output.tsv | sort -gk7 | awk '{FS="\t"; OFS="\t"; print $1,$2,$3,$4,$5,$6,$7,NR-1}' > $final_output
+
+awk '{FS="\t"; OFS="\t"; print $1,$2,$7}' $final_output > $final_output".pval"

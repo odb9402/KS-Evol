@@ -22,4 +22,4 @@ data = data.join(data.groupby('POS')['A_CNT'].sum(), on='POS', rsuffix='_ALL')
 data['PMT'] = data['A_CNT'] / data['T_CNT']
 data['P0'] = data['A_CNT_ALL'] / data['T_CNT_ALL']
 
-data.to_csv(output, sep=',', index=False)
+data.to_csv(output, sep='\t', index=False)

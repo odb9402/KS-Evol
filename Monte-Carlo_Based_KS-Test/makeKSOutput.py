@@ -24,11 +24,10 @@ oFile = open(output, 'w')
 
 pVals = pFile.readlines()
 
-
-oFile.write('CHROM,POS,TIMEPOINT,REF,ALT,TOTAL,ALT_ALL,P_ALL,pValue,')
+oFile.write('chr\tloc\ttimepoint\tmajor\tminor\ttotal_depth\tminor_depth\tp0\tpValue,')
 for i in range(timePoint - 1):
     oFile.write(str(i))
-    oFile.write(',')
+    oFile.write('\t')
 oFile.write(str(timePoint-1))
 oFile.write('\n')
 p=0
@@ -38,7 +37,7 @@ while (True):
     line = []
 
     time = iFile.readline()
-    tmp = time.strip().split(',')
+    tmp = time.strip().split('\t')
 
     if(time == ''): break
 
@@ -57,11 +56,11 @@ while (True):
     for i in range(0, timePoint-1):
         time = iFile.readline()
         if(time == ''): break
-        tmp = time.strip().split(',')
+        tmp = time.strip().split('\t')
 
         line.append(tmp[10])
 
-    oFile.write(','.join(line))
+    oFile.write('\t'.join(line))
     oFile.write('\n')
 
 
