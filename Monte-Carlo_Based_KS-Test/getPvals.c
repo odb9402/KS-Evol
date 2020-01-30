@@ -22,7 +22,7 @@
 #define FILE_LENGTH_LIMIT 100
 #define THREAD_NUM 28
 #define CLOCK_PER_MIN CLOCK_PER_SEC*60
-#define KERN_SIZE 1001 
+#define KERN_SIZE 1501 
 
 
 const char *argp_program_version = "binSampling 1.0";
@@ -115,7 +115,7 @@ double get_pval(double sampling_num, double ks){
     
     p_val = (1.0) - empirical_cdf[hist_idx];//empirical_cdf_count/sampling_num;
     if(p_val < 0.0)
-        p_val = 1E-30;
+        p_val = 0.0;
     //printf("pval : %.13f\n\n",p_val);
     return p_val;
 }
@@ -356,7 +356,8 @@ int main(int argc, char* argv[]){
     }
     rewind(input_fp);
     
-    p_0 = alt_sum_total / (double)(alt_sum_total + ref_sum_total);
+    p_0 = (double)alt_sum_total / (alt_sum_total + ref_sum_total);
+    printf("Alt total : %ld \t Ref total : %ld  \t Sum total : %ld \n", alt_sum_total, ref_sum_total);
     printf("p0 for entire alleles : %lf\n", p_0);
     printf("The number of entire alleles : %ld\n", ref_sum_total+alt_sum_total);
     printf("The total number of average alleles for each timepoint : %ld\n",
@@ -453,7 +454,7 @@ int main(int argc, char* argv[]){
     }
     
     for(int i=0; i < HIST_BIN_SIZE; i++)
-        fprintf(hist_out, "%f\n", hist_values[i]);
+        fprintf(hist_out, "%e\n", hist_values[i]);
     
     for(int i=0; i<THREAD_NUM; i++){
         gsl_histogram_reset(gsl_hist[i]);
